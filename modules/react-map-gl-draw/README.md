@@ -2,6 +2,8 @@
 
 `react-map-gl-draw` is a react based drawing library tailored for [`react-map-gl`](https://github.com/uber/react-map-gl).
 
+This fork adds free draw behavior to the `DRAW_POLYGON` mode.
+
 ## Options
 - `mode` (String, Optional)
   - `EditorModes.READ_ONLY` - Not interactive. This is the default mode.

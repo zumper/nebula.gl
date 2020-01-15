@@ -105,3 +105,36 @@ function inBounds(p1: Position, p2: Position, p: Position) {
 
   return p[0] >= bounds[0] && p[0] <= bounds[1] && p[1] >= bounds[2] && p[1] <= bounds[3];
 }
+
+// https://www.geodatasource.com/developers/javascript
+export function distanceInMiles(p1: Position, p2: Position) {
+  const lat1 = p1[1];
+  const lon1 = p1[0];
+  const lat2 = p2[1];
+  const lon2 = p2[0];
+
+  if (lat1 === lat2 && lon1 === lon2) {
+    return 0;
+  }
+
+  const radlat1 = (Math.PI * lat1) / 180;
+  const radlat2 = (Math.PI * lat2) / 180;
+  const theta = lon1 - lon2;
+  const radtheta = (Math.PI * theta) / 180;
+  let dist =
+    Math.sin(radlat1) * Math.sin(radlat2) +
+    Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+  if (dist > 1) {
+    dist = 1;
+  }
+  dist = Math.acos(dist);
+  dist = (dist * 180) / Math.PI;
+  dist = dist * 60 * 1.1515;
+  // dist = dist * 1.609344;  // <- if we need kilometers...
+  return dist;
+}
+
+// http://blog.madebylotus.com/blog/creating-static-distance-circles-in-map-box-how-many-miles-are-in-a-pixel
+export function milesToPixels(zoom: number, miles: number) {
+  return (Math.pow(2, zoom) * miles) / 97.2618456;
+}

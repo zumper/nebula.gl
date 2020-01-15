@@ -2,6 +2,7 @@
 import { _MapContext as MapContext } from 'react-map-gl';
 import React, { PureComponent } from 'react';
 import { ImmutableFeatureCollection } from '@nebula.gl/edit-modes';
+import throttle from 'lodash/throttle';
 
 import type { Feature, Position, EditAction } from '@nebula.gl/edit-modes';
 import type { MjolnirEvent } from 'mjolnir.js';
@@ -32,8 +33,10 @@ const MODE_TO_HANDLER = Object.freeze({
 const defaultProps = {
   mode: MODES.READ_ONLY,
   features: null,
+  maxFeatures: 10,
   onSelect: null,
-  onUpdate: null
+  onUpdate: null,
+  onMaxFeatures: null
 };
 
 const defaultState = {
@@ -57,6 +60,8 @@ const defaultState = {
   pointerDownMapCoords: null
 };
 
+const throttleWait = 50;
+
 export default class ModeHandler extends PureComponent<EditorProps, EditorState> {
   static defaultProps = defaultProps;
 
@@ -64,6 +69,9 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     super();
     this.state = defaultState;
     this._eventsRegistered = false;
+    this._isPointerDown = false;
+
+    const panmove = throttle(evt => this._onEvent(this._onPan, evt, false), throttleWait);
 
     this._events = {
       anyclick: evt => this._onEvent(this._onClick, evt, true),
@@ -71,9 +79,12 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
       pointermove: evt => this._onEvent(this._onPointerMove, evt, true),
       pointerdown: evt => this._onEvent(this._onPointerDown, evt, true),
       pointerup: evt => this._onEvent(this._onPointerUp, evt, true),
-      panmove: evt => this._onEvent(this._onPan, evt, false),
+      panmove,
       panstart: evt => this._onEvent(this._onPan, evt, false),
-      panend: evt => this._onEvent(this._onPan, evt, false)
+      panend: evt => {
+        panmove.cancel();
+        this._onEvent(this._onPan, evt, false);
+      }
     };
   }
 
@@ -97,6 +108,7 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
   _modeHandler: any;
   _context: ?MapContext;
   _containerRef: ?HTMLElement;
+  _isPointerDown: boolean;
 
   getFeatures = () => {
     let featureCollection = this._getFeatureCollection();
@@ -144,7 +156,9 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
       selectedIndexes: [selectedFeatureIndex],
       lastPointerMoveEvent,
       viewport,
-      onEdit: this._onEdit
+      onEdit: this._onEdit,
+      isPointerDown: this._isPointerDown,
+      modeConfig: {}
     };
   }
 
@@ -313,8 +327,16 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
   };
 
   _onClick = (event: BaseEvent) => {
-    const { mode } = this.props;
-    if (mode === MODES.SELECT || mode === MODES.EDITING) {
+    const { mode, maxFeatures, onMaxFeatures } = this.props;
+
+    if (this.getFeatures().length >= maxFeatures) {
+      if (typeof onMaxFeatures === 'function') {
+        onMaxFeatures();
+      }
+      return;
+    }
+
+    if (mode === MODES.SELECT || mode === MODES.EDITING || mode === MODES.DRAW_POLYGON) {
       const { mapCoords, screenCoords } = event;
       const pickedObject = event.picks && event.picks[0] && event.picks[0].object;
       if (pickedObject && isNumeric(pickedObject.featureIndex)) {
@@ -328,15 +350,15 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
           mapCoords,
           screenCoords
         });
-      } else {
-        this._onSelect({
-          selectedFeature: null,
-          selectedFeatureIndex: null,
-          selectedEditHandleIndex: null,
-          mapCoords,
-          screenCoords
-        });
+        return;
       }
+      this._onSelect({
+        selectedFeature: null,
+        selectedFeatureIndex: null,
+        selectedEditHandleIndex: null,
+        mapCoords,
+        screenCoords
+      });
     }
 
     const modeProps = this.getModeProps();
@@ -383,6 +405,23 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
 
   _onPointerDown = (event: BaseEvent) => {
     const pickedObject = event.picks && event.picks[0] && event.picks[0].object;
+
+    // if (pickedObject && pickedObject.type === 'feature' && isNumeric(pickedObject.featureIndex)) {
+    //   const selectedFeatureIndex = pickedObject.featureIndex;
+    //   const selectedFeature = this._getSelectedFeature(selectedFeatureIndex);
+    //   const { mapCoords, screenCoords } = event;
+    //   this._onSelect({
+    //     selectedFeature,
+    //     selectedFeatureIndex,
+    //     selectedEditHandleIndex:
+    //       pickedObject.type === ELEMENT_TYPE.EDIT_HANDLE ? pickedObject.index : null,
+    //     mapCoords,
+    //     screenCoords
+    //   });
+    //
+    //   return;
+    // }
+
     const startDraggingEvent = {
       ...event,
       pointerDownScreenCoords: event.screenCoords,
@@ -396,6 +435,7 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
       pointerDownMapCoords: event.mapCoords
     };
 
+    this._isPointerDown = true;
     this.setState(newState);
 
     const modeProps = this.getModeProps();
@@ -419,14 +459,31 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
 
     this.setState(newState);
 
-    const modeProps = this.getModeProps();
-    this._modeHandler.handleStopDragging(stopDraggingEvent, modeProps);
+    if (this._isPointerDown) {
+      this._isPointerDown = false;
+      const modeProps = this.getModeProps();
+      this._modeHandler.handleStopDragging(stopDraggingEvent, modeProps);
+    }
   };
 
   _onPan = (event: BaseEvent) => {
     const { isDragging } = this.state;
+    const { maxFeatures, mode, onMaxFeatures } = this.props;
+
     if (isDragging) {
       event.sourceEvent.stopImmediatePropagation();
+    }
+
+    if (this.getFeatures().length >= maxFeatures) {
+      if (typeof onMaxFeatures === 'function') {
+        onMaxFeatures();
+      }
+      return;
+    }
+
+    if (mode === MODES.DRAW_POLYGON) {
+      const modeProps = this.getModeProps();
+      this._modeHandler.handleClick(event, modeProps);
     }
   };
 

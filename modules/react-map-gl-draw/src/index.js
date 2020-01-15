@@ -6,3 +6,4 @@ export {
   RENDER_TYPE as RenderTypes,
   RENDER_STATE as RenderStates
 } from './constants';
+export { simplifyPath } from './simplify-path';

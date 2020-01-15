@@ -1,16 +1,76 @@
 // @flow
-import type { ClickEvent, FeatureCollection } from '@nebula.gl/edit-modes';
+import type { ClickEvent, FeatureCollection, StopDraggingEvent } from '@nebula.gl/edit-modes';
 import uuid from 'uuid/v1';
 
 import type { ModeProps } from '../types';
 import { EDIT_TYPE, GEOJSON_TYPE, GUIDE_TYPE, RENDER_TYPE } from '../constants';
-import { getFeatureCoordinates } from './utils';
+import { getFeatureCoordinates, distanceInMiles, milesToPixels } from './utils';
 import BaseMode from './base-mode';
 
 export default class DrawPolygonMode extends BaseMode {
+  freeDrawClosed = false;
+  didFreeDraw = false;
+
+  handleStopDragging(event: StopDraggingEvent, props: ModeProps<FeatureCollection>) {
+    const { data, isPointerDown } = props;
+
+    this.freeDrawClosed = false;
+
+    if (!isPointerDown && this.didFreeDraw) {
+      let tentativeFeature = this.getTentativeFeature();
+      const coordinates = getFeatureCoordinates(tentativeFeature);
+
+      if (!coordinates) {
+        return;
+      }
+
+      this.setTentativeFeature(null);
+
+      coordinates.push(coordinates[0]);
+
+      let id;
+      if (tentativeFeature && tentativeFeature.properties && tentativeFeature.properties.id) {
+        id = tentativeFeature.properties.id;
+      } else {
+        id = uuid();
+      }
+
+      tentativeFeature = {
+        type: 'Feature',
+        properties: {
+          id,
+          renderType: RENDER_TYPE.POLYGON
+        },
+        geometry: {
+          type: GEOJSON_TYPE.POLYGON,
+          coordinates: [coordinates]
+        }
+      };
+
+      const updatedData = data.addFeature(tentativeFeature).getObject();
+
+      props.onEdit({
+        editType: EDIT_TYPE.ADD_FEATURE,
+        updatedData,
+        editContext: null
+      });
+
+      this.freeDrawClosed = true;
+      this.didFreeDraw = false;
+    }
+  }
+
   handleClick = (event: ClickEvent, props: ModeProps<FeatureCollection>) => {
     const picked = event.picks && event.picks[0];
-    const { data } = props;
+    const { data, viewport, isPointerDown } = props;
+    const zoom = viewport && viewport.zoom ? viewport.zoom : 14;
+
+    if (isPointerDown) {
+      this.didFreeDraw = true;
+    }
+
+    // const isFromClicking = !isPointerDown && !this.didFreeDraw && !this.freeDrawClosed;
+    const isFromDrawing = isPointerDown && !this.freeDrawClosed;
 
     // update tentative feature
     let tentativeFeature = this.getTentativeFeature();
@@ -20,7 +80,13 @@ export default class DrawPolygonMode extends BaseMode {
     if (tentativeFeature) {
       const pickedObject = picked && picked.object;
       // clicked an editHandle of a tentative feature
-      if (pickedObject && pickedObject.index === 0) {
+
+      if (
+        !isFromDrawing &&
+        pickedObject &&
+        pickedObject.type === 'editHandle' &&
+        pickedObject.index === 0
+      ) {
         this.setTentativeFeature(null);
 
         // append point to the tail, close the polygon
@@ -53,17 +119,31 @@ export default class DrawPolygonMode extends BaseMode {
         });
       } else {
         // update tentativeFeature
-        tentativeFeature = {
-          ...tentativeFeature,
-          geometry: {
-            type: GEOJSON_TYPE.LINE_STRING,
-            coordinates: [...tentativeFeature.geometry.coordinates, event.mapCoords]
-          }
-        };
-        this.setTentativeFeature(tentativeFeature);
+
+        let pixels = 5;
+
+        if (isFromDrawing) {
+          const lastPoint =
+            tentativeFeature.geometry.coordinates[tentativeFeature.geometry.coordinates.length - 1];
+          const distance = distanceInMiles(lastPoint, event.mapCoords);
+
+          pixels = milesToPixels(zoom, distance);
+        }
+
+        if (pixels > 4) {
+          tentativeFeature = {
+            ...tentativeFeature,
+            geometry: {
+              type: GEOJSON_TYPE.LINE_STRING,
+              coordinates: [...tentativeFeature.geometry.coordinates, event.mapCoords]
+            }
+          };
+          this.setTentativeFeature(tentativeFeature);
+        }
       }
     } else {
       // create a tentativeFeature
+
       tentativeFeature = {
         type: 'Feature',
         properties: {
@@ -80,6 +160,8 @@ export default class DrawPolygonMode extends BaseMode {
 
       this.setTentativeFeature(tentativeFeature);
     }
+
+    this.freeDrawClosed = false;
   };
 
   getGuides = (props: ModeProps<FeatureCollection>) => {
