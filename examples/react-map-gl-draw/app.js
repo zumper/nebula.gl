@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { render } from 'react-dom';
 import MapGL from 'react-map-gl';
 import { Editor, EditorModes } from 'react-map-gl-draw';
+import { MyApp } from './my-app';
 
 import Toolbar from './toolbar';
 
@@ -87,5 +88,5 @@ export default class App extends Component {
 }
 
 export function renderToDom(container) {
-  render(<App />, container);
+  render(<MyApp />, container);
 }

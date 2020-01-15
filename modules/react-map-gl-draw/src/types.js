@@ -42,13 +42,16 @@ export type ModeProps<TData> = {
   onEdit: (editAction: EditAction<TData>) => void,
 
   // Callback used to update cursor
-  onUpdateCursor: (cursor: ?string) => void
+  onUpdateCursor: (cursor: ?string) => void,
+
+  isPointerDown: boolean
 };
 
 export type EditorProps = {
   mode: Mode,
   style: ?Object,
   features: ?(Feature[]),
+  maxFeatures: ?number,
   selectedFeatureIndex: ?number,
   clickRadius: number,
   featureShape: Function | string,
@@ -56,7 +59,8 @@ export type EditorProps = {
   editHandleStyle: Function | any,
   featureStyle: Function | any,
   onUpdate: Function,
-  onSelect: Function
+  onSelect: Function,
+  onMaxFeatures: Function
 };
 
 export type EditorState = {

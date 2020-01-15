@@ -1,8 +1,8 @@
 {
-  "name": "react-map-gl-draw",
+  "name": "@zcode/react-map-gl-draw",
   "description": "A lite version editing layer with react",
   "license": "MIT",
-  "version": "0.17.0",
+  "version": "0.17.0-zumper.0",
   "author": "Xintong Xia <xintong@uber.com>",
   "repository": {
     "type": "git",
@@ -20,6 +20,9 @@
     "dist-es6",
     "src"
   ],
+  "publishConfig": {
+    "registry": "https://zumper.jfrog.io/zumper/api/npm/npm-local/"
+  },
   "scripts": {
     "build-clean": "rm -fr dist dist-es6 && mkdir -p dist dist-es6",
     "build-es6": "rm -fr dist-es6 && BABEL_ENV=es6 babel src --config-file ../../babel.config.js --out-dir dist-es6 --source-maps inline",
@@ -35,6 +38,7 @@
   "dependencies": {
     "@nebula.gl/edit-modes": "0.17.0",
     "@turf/helpers": "^6.1.4",
+    "lodash": "^4.17.15",
     "mjolnir.js": "^2.2.1",
     "prop-types": "^15.7.2",
     "uuid": "^3.3.2",

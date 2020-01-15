@@ -58,3 +58,5 @@ export const EDIT_TYPE = {
   MOVE_POSITION: 'movePosition',
   FINISH_MOVE_POSITION: 'finishMovePosition'
 };
+
+export const MIN_PX_DISTANCE_BETWEEN_POINTS = 5;
