@@ -59,4 +59,4 @@ export const EDIT_TYPE = {
   FINISH_MOVE_POSITION: 'finishMovePosition'
 };
 
-export const MIN_PX_DISTANCE_BETWEEN_POINTS = 4;
+export const MIN_PX_DISTANCE_BETWEEN_POINTS = 2;

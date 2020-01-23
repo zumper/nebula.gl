@@ -60,7 +60,7 @@ const defaultState = {
   pointerDownMapCoords: null
 };
 
-const throttleWait = 40;
+const throttleWait = 20;
 
 export default class ModeHandler extends PureComponent<EditorProps, EditorState> {
   static defaultProps = defaultProps;
@@ -337,13 +337,6 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
   _onClick = (event: BaseEvent) => {
     const { mode, maxFeatures, onMaxFeatures } = this.props;
 
-    if (this.getFeatures().length >= maxFeatures) {
-      if (typeof onMaxFeatures === 'function') {
-        onMaxFeatures();
-      }
-      return;
-    }
-
     if (mode === MODES.SELECT || mode === MODES.EDITING || mode === MODES.DRAW_POLYGON) {
       const { mapCoords, screenCoords } = event;
       const pickedObject = event.picks && event.picks[0] && event.picks[0].object;
@@ -368,6 +361,13 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
           screenCoords
         });
       }
+    }
+
+    if (this.getFeatures().length >= maxFeatures) {
+      if (typeof onMaxFeatures === 'function') {
+        onMaxFeatures();
+      }
+      return;
     }
 
     const modeProps = this.getModeProps();

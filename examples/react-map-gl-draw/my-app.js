@@ -34,43 +34,24 @@ const Delete = styled.button`
   width: 85px;
 `;
 
-const toleranceTable = {
-  8: 0.008,
-  9: 0.005,
-  10: 0.0025,
-  11: 0.0012,
-  12: 0.0009,
-  13: 0.0005,
-  14: 0.0003,
-  15: 0.0002,
-  16: 0.0001,
-  17: 0.00003
-};
+export const simplifyPolygon = (points, zoom, polygonMaxLength) => {
+  // reduce path using douglas-peucker
+  // scale tolerance by zoom, the more zoomed out, the less tolerance to use
+  // 'seems nice' at 1e4 @ zoom 12, gets 'chunky' above 4e-4
+  const peucker = 1e-4;
+  const tolerance = peucker * 0.75 ** (zoom - 12);
 
-/**
- * Reasonable tolerance values for the `simplifyPath` function based on the zoom level
- */
-const getSimplifyTolerance = zoom => {
-  if (zoom < 8) {
-    return toleranceTable[8];
-  } else if (zoom < 9) {
-    return toleranceTable[9];
-  } else if (zoom < 10) {
-    return toleranceTable[10];
-  } else if (zoom < 11) {
-    return toleranceTable[11];
-  } else if (zoom < 12) {
-    return toleranceTable[12];
-  } else if (zoom < 13) {
-    return toleranceTable[13];
-  } else if (zoom < 14) {
-    return toleranceTable[14];
-  } else if (zoom < 15) {
-    return toleranceTable[15];
-  } else if (zoom < 16) {
-    return toleranceTable[16];
+  // https://developers.google.com/maps/documentation/utilities/polylinealgorithm genius
+  let reducedPath = simplifyPath(points, tolerance);
+
+  // try to reduce the path by increasing tolerance. Give up after 15 times.
+  let i = 0;
+  while (i < 15 && reducedPath.length > polygonMaxLength) {
+    i += 1;
+    reducedPath = simplifyPath(points, tolerance + i * peucker);
   }
-  return toleranceTable[17];
+
+  return reducedPath;
 };
 
 export const MyApp = () => {
@@ -139,10 +120,12 @@ export const MyApp = () => {
             newFeature.geometry.coordinates[0].length - 1
           );
 
+          const coordinates = simplifyPolygon(points, zoom, 100);
+
           const simplifiedFeature = {
             type: 'Feature',
             geometry: {
-              coordinates: [simplifyPath(points, getSimplifyTolerance(zoom))],
+              coordinates: [coordinates],
               type: 'Polygon'
             },
             properties: { renderType: 'Polygon' }
@@ -201,7 +184,8 @@ export const MyApp = () => {
         editHandleShape="circle"
         featureStyle={getFeatureStyle({ editorMode, isMouseDown })}
         editHandleStyle={getEditHandleStyle({ editorMode, isMouseDown })}
-        maxFeatures={30}
+        maxFeatures={5}
+        onMaxFeatures={() => console.log('max features')}
       />
       <Button onClick={handleDrawClick}>{canDragMap ? 'Draw' : 'Drawing'}</Button>
       <Delete onClick={handleClearAll}>Clear all</Delete>
