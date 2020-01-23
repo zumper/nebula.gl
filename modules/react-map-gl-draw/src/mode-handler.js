@@ -60,7 +60,7 @@ const defaultState = {
   pointerDownMapCoords: null
 };
 
-const throttleWait = 50;
+const throttleWait = 40;
 
 export default class ModeHandler extends PureComponent<EditorProps, EditorState> {
   static defaultProps = defaultProps;
@@ -207,8 +207,16 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
 
   /* EDITING OPERATIONS */
   _clearEditingState = () => {
+    let { selectedFeatureIndex } = this.state;
+
+    const mode = this.props.mode;
+
+    if (!mode || mode === MODES.READ_ONLY) {
+      selectedFeatureIndex = null;
+    }
+
     this.setState({
-      selectedFeatureIndex: null,
+      selectedFeatureIndex,
 
       hovered: null,
 
@@ -350,15 +358,16 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
           mapCoords,
           screenCoords
         });
-        return;
+        // return;
+      } else {
+        this._onSelect({
+          selectedFeature: null,
+          selectedFeatureIndex: null,
+          selectedEditHandleIndex: null,
+          mapCoords,
+          screenCoords
+        });
       }
-      this._onSelect({
-        selectedFeature: null,
-        selectedFeatureIndex: null,
-        selectedEditHandleIndex: null,
-        mapCoords,
-        screenCoords
-      });
     }
 
     const modeProps = this.getModeProps();
@@ -405,22 +414,6 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
 
   _onPointerDown = (event: BaseEvent) => {
     const pickedObject = event.picks && event.picks[0] && event.picks[0].object;
-
-    // if (pickedObject && pickedObject.type === 'feature' && isNumeric(pickedObject.featureIndex)) {
-    //   const selectedFeatureIndex = pickedObject.featureIndex;
-    //   const selectedFeature = this._getSelectedFeature(selectedFeatureIndex);
-    //   const { mapCoords, screenCoords } = event;
-    //   this._onSelect({
-    //     selectedFeature,
-    //     selectedFeatureIndex,
-    //     selectedEditHandleIndex:
-    //       pickedObject.type === ELEMENT_TYPE.EDIT_HANDLE ? pickedObject.index : null,
-    //     mapCoords,
-    //     screenCoords
-    //   });
-    //
-    //   return;
-    // }
 
     const startDraggingEvent = {
       ...event,
@@ -483,7 +476,7 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
 
     if (mode === MODES.DRAW_POLYGON) {
       const modeProps = this.getModeProps();
-      this._modeHandler.handleClick(event, modeProps);
+      this._modeHandler.handleDrawing(event, modeProps);
     }
   };
 

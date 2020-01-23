@@ -15,7 +15,6 @@ module.exports = {
     'max-statements': 'off',
     'no-return-assign': 'off',
     'flowtype/semi': ['error', 'always'],
-    'func-style': 'error',
     'prettier/prettier': 'error',
     'react/no-multi-comp': 'off',
     'react/sort-comp': 'error',
@@ -29,7 +28,6 @@ module.exports = {
     /* Style guide */
     'import/first': 'error',
     'import/no-duplicates': 'error',
-    'import/extensions': 'error',
     'import/order': 'error',
     'import/newline-after-import': 'error',
     'import/extensions': 'off',
@@ -43,7 +41,8 @@ module.exports = {
     'no-restricted-imports': ['error', 'querystring']
   },
   globals: {
-    Buffer: true
+    Buffer: true,
+    window: true,
   },
   env: {
     // Support global Jest variables (test, expect, etc.)

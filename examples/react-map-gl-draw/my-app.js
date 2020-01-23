@@ -4,6 +4,7 @@ import { Editor, EditorModes } from 'react-map-gl-draw';
 import styled from 'styled-components';
 import { getFeatureStyle, getEditHandleStyle } from './style';
 import { simplifyPath } from './simplify-path';
+import { useIsMouseDown } from './useMouseDown';
 
 const MAP_STYLE = 'mapbox://styles/mapbox/light-v9';
 
@@ -12,7 +13,7 @@ const DEFAULT_VIEWPORT = {
   height: 600,
   longitude: -122.45,
   latitude: 37.78,
-  zoom: 11
+  zoom: 12
 };
 
 const Button = styled.button`
@@ -103,7 +104,7 @@ export const MyApp = () => {
     options => {
       if (options && options.selectedFeatureIndex !== null) {
         // setSelectedIndex(options.selectedFeatureIndex);
-        // setEditorMode(EditorModes.EDITING);
+        setEditorMode(EditorModes.EDITING);
       } else {
         // setSelectedIndex(-1);
         // eslint-disable-next-line no-lonely-if
@@ -178,6 +179,8 @@ export const MyApp = () => {
 
   const getCursor = useCallback(() => (canDragMap ? 'grab' : 'crosshair'), [canDragMap]);
 
+  const isMouseDown = useIsMouseDown();
+
   return (
     <MapGL
       {...viewport}
@@ -196,8 +199,8 @@ export const MyApp = () => {
         onSelect={handleOnSelectFeature}
         onUpdate={handleOnUpdateFeature}
         editHandleShape="circle"
-        featureStyle={getFeatureStyle({ editorMode })}
-        editHandleStyle={getEditHandleStyle({ editorMode })}
+        featureStyle={getFeatureStyle({ editorMode, isMouseDown })}
+        editHandleStyle={getEditHandleStyle({ editorMode, isMouseDown })}
         maxFeatures={30}
       />
       <Button onClick={handleDrawClick}>{canDragMap ? 'Draw' : 'Drawing'}</Button>

@@ -66,7 +66,7 @@ export default class DrawPolygonMode extends BaseMode {
     }
   }
 
-  handleClick = (event: ClickEvent, props: ModeProps<FeatureCollection>) => {
+  handleDrawing = (event: ClickEvent, props: ModeProps<FeatureCollection>) => {
     const picked = event.picks && event.picks[0];
     const { data, viewport, isPointerDown } = props;
     const zoom = viewport && viewport.zoom ? viewport.zoom : 14;

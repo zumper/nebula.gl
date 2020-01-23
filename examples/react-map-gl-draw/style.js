@@ -3,10 +3,13 @@
  * @copyright   Copyright (c) 2019, Zumper
  */
 
-import { RenderStates } from 'react-map-gl-draw';
+import { RenderStates } from '@zcode/react-map-gl-draw';
 
-export const getEditHandleStyle = ({ isStateZoom, editorMode }) => ({ feature, state }) => {
-  if (isStateZoom) {
+export const getEditHandleStyle = ({ isStateZoom, editorMode, isMouseDown, isMobile }) => ({
+  feature,
+  state
+}) => {
+  if (isStateZoom || isMouseDown || isMobile) {
     return {
       fillOpacity: 0,
       strokeOpacity: 0
