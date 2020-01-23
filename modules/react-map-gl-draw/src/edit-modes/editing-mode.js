@@ -32,34 +32,58 @@ export default class EditingMode extends BaseMode {
     if (
       feature &&
       (feature.geometry.type === RENDER_TYPE.POLYGON ||
-        feature.geometry.type === RENDER_TYPE.LINE_STRING) &&
-      pickedObject.type === ELEMENT_TYPE.SEGMENT
+        feature.geometry.type === RENDER_TYPE.LINE_STRING)
     ) {
       const coordinates = getFeatureCoordinates(feature);
       if (!coordinates) {
         return;
       }
-      const insertIndex = (index + 1) % coordinates.length;
-      const positionIndexes =
-        feature.geometry.type === RENDER_TYPE.POLYGON ? [0, insertIndex] : [insertIndex];
-      const insertMapCoords = this._getPointOnSegment(feature, pickedObject, event.mapCoords);
 
-      const updatedData = props.data
-        .addPosition(featureIndex, positionIndexes, insertMapCoords)
-        .getObject();
+      if (pickedObject.type === ELEMENT_TYPE.SEGMENT) {
+        const insertIndex = (index + 1) % coordinates.length;
+        const positionIndexes =
+          feature.geometry.type === RENDER_TYPE.POLYGON ? [0, insertIndex] : [insertIndex];
+        const insertMapCoords = this._getPointOnSegment(feature, pickedObject, event.mapCoords);
 
-      props.onEdit({
-        editType: EDIT_TYPE.ADD_POSITION,
-        updatedData,
-        editContext: [
-          {
-            featureIndex,
-            editHandleIndex: insertIndex,
-            screenCoords: props.viewport && props.viewport.project(insertMapCoords),
-            mapCoords: insertMapCoords
-          }
-        ]
-      });
+        const updatedData = props.data
+          .addPosition(featureIndex, positionIndexes, insertMapCoords)
+          .getObject();
+
+        props.onEdit({
+          editType: EDIT_TYPE.ADD_POSITION,
+          updatedData,
+          editContext: [
+            {
+              featureIndex,
+              editHandleIndex: insertIndex,
+              screenCoords: props.viewport && props.viewport.project(insertMapCoords),
+              mapCoords: insertMapCoords
+            }
+          ]
+        });
+      } else if (pickedObject.type === ELEMENT_TYPE.EDIT_HANDLE) {
+        const positionIndexes = [0, index];
+
+        let updatedData;
+        try {
+          updatedData = props.data.removePosition(featureIndex, positionIndexes).getObject();
+        } catch (ignored) {
+          // This happens if user attempts to remove the last point
+        }
+
+        if (updatedData) {
+          props.onEdit({
+            updatedData,
+            editType: EDIT_TYPE.REMOVE_POSITION,
+            editContext: [
+              {
+                featureIndex,
+                positionIndexes
+              }
+            ]
+          });
+        }
+      }
     }
   };
 

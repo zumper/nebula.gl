@@ -120,7 +120,7 @@ export const MyApp = () => {
             newFeature.geometry.coordinates[0].length - 1
           );
 
-          const coordinates = simplifyPolygon(points, zoom, 100);
+          const coordinates = simplifyPath(points, 0.01);
 
           const simplifiedFeature = {
             type: 'Feature',
