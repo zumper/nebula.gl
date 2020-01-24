@@ -88,6 +88,8 @@ export default class EditingMode extends BaseMode {
   };
 
   handleStopDragging(event: StopDraggingEvent, props: ModeProps<FeatureCollection>) {
+    const { onEdit, lastPointerMoveEvent } = props;
+
     // replace point
     const pickedObject = event.picks && event.picks[0] && event.picks[0].object;
     if (!pickedObject || !isNumeric(pickedObject.featureIndex)) {
@@ -98,6 +100,23 @@ export default class EditingMode extends BaseMode {
       case ELEMENT_TYPE.FEATURE:
       case ELEMENT_TYPE.EDIT_HANDLE:
         this._handleDragging(event, props);
+
+        const { isDragging } = lastPointerMoveEvent;
+        if (isDragging) {
+          const editHandleIndex = pickedObject.index;
+
+          const updatedData = this._updateFeature(props, 'editHandle', {
+            editHandleIndex,
+            mapCoords: event.mapCoords
+          });
+
+          onEdit({
+            editType: EDIT_TYPE.FINISH_MOVE_POSITION,
+            updatedData,
+            editContext: null
+          });
+        }
+
         break;
       default:
     }

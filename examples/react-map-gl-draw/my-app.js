@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import MapGL from 'react-map-gl';
-import { Editor, EditorModes } from 'react-map-gl-draw';
+import cloneDeep from 'lodash/cloneDeep';
+import { Editor, EditorModes, EditTypes } from 'react-map-gl-draw';
 import styled from 'styled-components';
 import { getFeatureStyle, getEditHandleStyle } from './style';
 import { simplifyPath } from './simplify-path';
@@ -34,6 +35,15 @@ const Delete = styled.button`
   width: 85px;
 `;
 
+const Undo = styled.button`
+  padding: 10px 20px;
+  position: absolute;
+  z-index: 100;
+  left: 20px;
+  top: 100px;
+  width: 85px;
+`;
+
 export const simplifyPolygon = (points, zoom, polygonMaxLength) => {
   // reduce path using douglas-peucker
   // scale tolerance by zoom, the more zoomed out, the less tolerance to use
@@ -58,13 +68,18 @@ export const MyApp = () => {
   const editorRef = useRef(null);
   const [viewport, setViewport] = useState(DEFAULT_VIEWPORT);
   const [editorMode, setEditorMode] = useState(EditorModes.READ_ONLY);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [selectedFeatureBackup, setSelectedFeatureBackup] = useState(null);
+  const [undoEnabled, setUndoEnabled] = useState(false);
   const { zoom } = viewport;
-  // const [selectedIndex, setSelectedIndex] = useState(-1);
 
   let featuresCount = 0;
 
-  if (editorRef && editorRef.current && editorRef.current.getFeatures) {
-    featuresCount = editorRef.current.getFeatures().length;
+  if (editorRef && editorRef.current && typeof editorRef.current.getFeatures === 'function') {
+    const features = editorRef.current.getFeatures();
+    if (features) {
+      featuresCount = features.length;
+    }
   }
 
   const handleDrawClick = useCallback(
@@ -84,10 +99,14 @@ export const MyApp = () => {
   const handleOnSelectFeature = useCallback(
     options => {
       if (options && options.selectedFeatureIndex !== null) {
-        // setSelectedIndex(options.selectedFeatureIndex);
+        setSelectedIndex(options.selectedFeatureIndex);
+        const backupFeat = cloneDeep(editorRef.current.getFeatures()[options.selectedFeatureIndex]);
+        setSelectedFeatureBackup(backupFeat);
+
         setEditorMode(EditorModes.EDITING);
       } else {
-        // setSelectedIndex(-1);
+        setSelectedFeatureBackup(null);
+        setSelectedIndex(-1);
         // eslint-disable-next-line no-lonely-if
         if (featuresCount < 5) {
           // enable drawing when unselecting:
@@ -109,7 +128,7 @@ export const MyApp = () => {
 
   const handleOnUpdateFeature = useCallback(
     ({ editType, data }) => {
-      if (editType === 'addFeature') {
+      if (editType === EditTypes.ADD_FEATURE) {
         if (data && data.length) {
           const newFeature = data[data.length - 1];
 
@@ -137,6 +156,12 @@ export const MyApp = () => {
         if (featuresCount < 5) {
           handleOnDone();
         }
+      } else if (
+        editType === EditTypes.ADD_POSITION ||
+        editType === EditTypes.FINISH_MOVE_POSITION ||
+        editType === EditTypes.REMOVE_POSITION
+      ) {
+        setUndoEnabled(true);
       }
     },
     [featuresCount, handleOnDone]
@@ -164,6 +189,20 @@ export const MyApp = () => {
 
   const isMouseDown = useIsMouseDown();
 
+  const handleUndo = useCallback(
+    () => {
+      editorRef.current.deleteFeatures(selectedIndex);
+      setSelectedIndex(-1);
+      setSelectedFeatureBackup(null);
+      setUndoEnabled(false);
+      setEditorMode(EditorModes.DRAW_POLYGON);
+      setTimeout(() => {
+        editorRef.current.addFeatures(selectedFeatureBackup);
+      }, 0);
+    },
+    [selectedIndex, selectedFeatureBackup]
+  );
+
   return (
     <MapGL
       {...viewport}
@@ -189,6 +228,9 @@ export const MyApp = () => {
       />
       <Button onClick={handleDrawClick}>{canDragMap ? 'Draw' : 'Drawing'}</Button>
       <Delete onClick={handleClearAll}>Clear all</Delete>
+      <Undo onClick={handleUndo} disabled={!undoEnabled}>
+        Undo
+      </Undo>
     </MapGL>
   );
 };
