@@ -25,12 +25,11 @@ export default class DrawPolygonMode extends BaseMode {
     if (!isPointerDown && this.didFreeDraw) {
       let tentativeFeature = this.getTentativeFeature();
       const coordinates = getFeatureCoordinates(tentativeFeature);
+      this.setTentativeFeature(null);
 
       if (!coordinates) {
         return;
       }
-
-      this.setTentativeFeature(null);
 
       coordinates.push(coordinates[0]);
 

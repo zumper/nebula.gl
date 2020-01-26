@@ -98,6 +98,8 @@ export default class EditingMode extends BaseMode {
 
     switch (pickedObject.type) {
       case ELEMENT_TYPE.FEATURE:
+        this._handleDragging(event, props);
+        break;
       case ELEMENT_TYPE.EDIT_HANDLE:
         this._handleDragging(event, props);
 
@@ -105,16 +107,20 @@ export default class EditingMode extends BaseMode {
         if (isDragging) {
           const editHandleIndex = pickedObject.index;
 
-          const updatedData = this._updateFeature(props, 'editHandle', {
-            editHandleIndex,
-            mapCoords: event.mapCoords
-          });
+          try {
+            const updatedData = this._updateFeature(props, 'editHandle', {
+              editHandleIndex,
+              mapCoords: event.mapCoords
+            });
 
-          onEdit({
-            editType: EDIT_TYPE.FINISH_MOVE_POSITION,
-            updatedData,
-            editContext: null
-          });
+            onEdit({
+              editType: EDIT_TYPE.FINISH_MOVE_POSITION,
+              updatedData,
+              editContext: null
+            });
+          } catch (ignored) {
+            //
+          }
         }
 
         break;

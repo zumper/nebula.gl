@@ -6,6 +6,8 @@ import styled from 'styled-components';
 import { getFeatureStyle, getEditHandleStyle } from './style';
 import { simplifyPath } from './simplify-path';
 import { useIsMouseDown } from './useMouseDown';
+import { simplifyPolygon } from './simplifyPolygon';
+import isLine from './isLine';
 
 const MAP_STYLE = 'mapbox://styles/mapbox/light-v9';
 
@@ -18,51 +20,37 @@ const DEFAULT_VIEWPORT = {
 };
 
 const Button = styled.button`
+  background-color: aliceblue;
+  border: solid 1px #cfd7de;
   padding: 10px 20px;
   position: absolute;
   z-index: 100;
   left: 20px;
   top: 20px;
-  width: 85px;
+  width: 95px;
 `;
 
 const Delete = styled.button`
+  background-color: aliceblue;
+  border: solid 1px #cfd7de;
   padding: 10px 20px;
   position: absolute;
   z-index: 100;
   left: 20px;
   top: 60px;
-  width: 85px;
+  width: 95px;
 `;
 
 const Undo = styled.button`
+  background-color: aliceblue;
+  border: solid 1px #cfd7de;
   padding: 10px 20px;
   position: absolute;
   z-index: 100;
   left: 20px;
   top: 100px;
-  width: 85px;
+  width: 95px;
 `;
-
-export const simplifyPolygon = (points, zoom, polygonMaxLength) => {
-  // reduce path using douglas-peucker
-  // scale tolerance by zoom, the more zoomed out, the less tolerance to use
-  // 'seems nice' at 1e4 @ zoom 12, gets 'chunky' above 4e-4
-  const peucker = 1e-4;
-  const tolerance = peucker * 0.75 ** (zoom - 12);
-
-  // https://developers.google.com/maps/documentation/utilities/polylinealgorithm genius
-  let reducedPath = simplifyPath(points, tolerance);
-
-  // try to reduce the path by increasing tolerance. Give up after 15 times.
-  let i = 0;
-  while (i < 15 && reducedPath.length > polygonMaxLength) {
-    i += 1;
-    reducedPath = simplifyPath(points, tolerance + i * peucker);
-  }
-
-  return reducedPath;
-};
 
 export const MyApp = () => {
   const editorRef = useRef(null);
@@ -131,15 +119,22 @@ export const MyApp = () => {
       if (editType === EditTypes.ADD_FEATURE) {
         if (data && data.length) {
           const newFeature = data[data.length - 1];
+          const newFeatCoordinates = newFeature.geometry.coordinates[0];
 
-          // mapbox polygons always have the last point equal to the first,
-          // so we have to remove the last point to simplify
-          const points = newFeature.geometry.coordinates[0].slice(
-            0,
-            newFeature.geometry.coordinates[0].length - 1
-          );
+          // mapbox polygon first and last points are always the same. We need to remove one for the simplify function to work
+          const points = newFeatCoordinates.slice(0, newFeatCoordinates.length - 1);
+          const coordinates = simplifyPolygon(points, zoom, 100);
+          const line = isLine(coordinates);
 
-          const coordinates = simplifyPath(points, 0.01);
+          if (line) {
+            console.log('is line');
+            editorRef.current.deleteFeatures(featuresCount);
+            setEditorMode(EditorModes.READ_ONLY);
+            setTimeout(() => {
+              setEditorMode(EditorModes.DRAW_POLYGON);
+            }, 0);
+            return;
+          }
 
           const simplifiedFeature = {
             type: 'Feature',
