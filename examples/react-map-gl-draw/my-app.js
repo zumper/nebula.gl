@@ -52,6 +52,17 @@ const Undo = styled.button`
   width: 95px;
 `;
 
+const Select = styled.button`
+  background-color: aliceblue;
+  border: solid 1px #cfd7de;
+  padding: 10px 20px;
+  position: absolute;
+  z-index: 100;
+  left: 20px;
+  top: 140px;
+  width: 95px;
+`;
+
 export const MyApp = () => {
   const editorRef = useRef(null);
   const [viewport, setViewport] = useState(DEFAULT_VIEWPORT);
@@ -198,6 +209,14 @@ export const MyApp = () => {
     [selectedIndex, selectedFeatureBackup]
   );
 
+  const handleSelect = useCallback(() => {
+    const features = editorRef.current.getFeatures();
+    if (features.length) {
+      setEditorMode(EditorModes.EDITING);
+      setSelectedIndex(0);
+    }
+  });
+
   return (
     <MapGL
       {...viewport}
@@ -220,12 +239,14 @@ export const MyApp = () => {
         editHandleStyle={getEditHandleStyle({ editorMode, isMouseDown })}
         maxFeatures={5}
         onMaxFeatures={() => console.log('max features')}
+        selectedFeatureIndex={selectedIndex}
       />
       <Button onClick={handleDrawClick}>{canDragMap ? 'Draw' : 'Drawing'}</Button>
       <Delete onClick={handleClearAll}>Clear all</Delete>
       <Undo onClick={handleUndo} disabled={!undoEnabled}>
         Undo
       </Undo>
+      <Select onClick={handleSelect}>Select</Select>
     </MapGL>
   );
 };
