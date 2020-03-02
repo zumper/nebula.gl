@@ -146,7 +146,7 @@ export default class DrawPolygonMode extends BaseMode {
           this.setTentativeFeature(tentativeFeature);
         }
       }
-    } else {
+    } else if (isFromDrawing) {
       // create a tentativeFeature
 
       tentativeFeature = {
