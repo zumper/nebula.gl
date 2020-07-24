@@ -55,7 +55,7 @@
     "@turf/centroid": ">=4.0.0",
     "@turf/circle": ">=4.0.0",
     "@turf/destination": ">=4.0.0",
-    "@turf/difference": ">=4.0.0",
+    "@turf/difference": "6.0.1",
     "@turf/distance": ">=4.0.0",
     "@turf/ellipse": ">=4.0.0",
     "@turf/helpers": ">=4.0.0",
