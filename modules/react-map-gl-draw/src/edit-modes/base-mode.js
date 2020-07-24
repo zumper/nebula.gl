@@ -7,7 +7,7 @@ import type {
   StartDraggingEvent,
   StopDraggingEvent,
   FeatureCollection
-} from '@nebula.gl/edit-modes';
+} from '@zcode/edit-modes';
 import type { ModeProps } from '../types';
 
 import { GEOJSON_TYPE, GUIDE_TYPE } from '../constants';

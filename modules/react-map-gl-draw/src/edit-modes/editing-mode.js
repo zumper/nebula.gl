@@ -7,7 +7,7 @@ import type {
   StopDraggingEvent,
   PointerMoveEvent,
   Position
-} from '@nebula.gl/edit-modes';
+} from '@zcode/edit-modes';
 import type { ModeProps } from '../types';
 
 import { RENDER_TYPE, EDIT_TYPE, ELEMENT_TYPE, GEOJSON_TYPE, GUIDE_TYPE } from '../constants';

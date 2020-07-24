@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { Feature } from '@nebula.gl/edit-modes';
+import type { Feature } from '@zcode/edit-modes';
 import type { GeoJsonType, RenderState, Id } from './types';
 
 import { RENDER_STATE, RENDER_TYPE, GEOJSON_TYPE, GUIDE_TYPE, ELEMENT_TYPE } from './constants';

@@ -2,7 +2,7 @@
 
 import uuid from 'uuid/v1';
 
-import type { ClickEvent, FeatureCollection } from '@nebula.gl/edit-modes';
+import type { ClickEvent, FeatureCollection } from '@zcode/edit-modes';
 import type { ModeProps } from '../types';
 
 import { EDIT_TYPE, GEOJSON_TYPE, RENDER_TYPE } from '../constants';

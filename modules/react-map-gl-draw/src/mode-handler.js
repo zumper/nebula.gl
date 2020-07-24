@@ -1,10 +1,10 @@
 // @flow
 import { _MapContext as MapContext } from 'react-map-gl';
 import React, { PureComponent } from 'react';
-import { ImmutableFeatureCollection } from '@nebula.gl/edit-modes';
+import { ImmutableFeatureCollection } from '@zcode/edit-modes';
 import throttle from 'lodash/throttle';
 
-import type { Feature, Position, EditAction } from '@nebula.gl/edit-modes';
+import type { Feature, Position, EditAction } from '@zcode/edit-modes';
 import type { MjolnirEvent } from 'mjolnir.js';
 import type { BaseEvent, EditorProps, EditorState, SelectAction } from './types';
 import memoize from './memoize';

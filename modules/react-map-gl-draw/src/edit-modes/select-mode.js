@@ -1,6 +1,6 @@
 // @flow
 
-import type { FeatureCollection, StopDraggingEvent, PointerMoveEvent } from '@nebula.gl/edit-modes';
+import type { FeatureCollection, StopDraggingEvent, PointerMoveEvent } from '@zcode/edit-modes';
 import type { ModeProps } from '../types';
 
 import { EDIT_TYPE, ELEMENT_TYPE, GEOJSON_TYPE } from '../constants';

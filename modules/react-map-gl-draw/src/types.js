@@ -9,7 +9,7 @@ import type {
   Pick,
   ClickEvent,
   ScreenCoordinates
-} from '@nebula.gl/edit-modes';
+} from '@zcode/edit-modes';
 
 import { RENDER_STATE, MODES, GEOJSON_TYPE } from './constants';
 

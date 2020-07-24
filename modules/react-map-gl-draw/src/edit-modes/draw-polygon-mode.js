@@ -1,5 +1,5 @@
 // @flow
-import type { ClickEvent, FeatureCollection, StopDraggingEvent } from '@nebula.gl/edit-modes';
+import type { ClickEvent, FeatureCollection, StopDraggingEvent } from '@zcode/edit-modes';
 import uuid from 'uuid/v1';
 
 import type { ModeProps } from '../types';
